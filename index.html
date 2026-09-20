@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Buy vs Rent + Invest Calculator</title>
+  <style>
+    :root { --bg:#f7f7f8; --card:#fff; --text:#171717; --muted:#666; --border:#ddd; --buy:#2563eb; --rent:#dc2626; --accent:#111827; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:1180px; margin:0 auto; padding:24px; }
+    h1 { margin:0 0 6px; font-size:clamp(26px,4vw,40px); }
+    .sub { color:var(--muted); margin-bottom:22px; }
+    .layout { display:grid; grid-template-columns:320px 1fr; gap:18px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; }
+    .controls { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    label { font-size:13px; font-weight:600; }
+    input { width:100%; margin-top:6px; padding:11px 12px; font-size:16px; border:1px solid var(--border); border-radius:10px; background:#fff; }
+    .full { grid-column:1 / -1; }
+    button { width:100%; min-height:44px; border:0; border-radius:10px; background:var(--accent); color:#fff; font-size:15px; font-weight:700; cursor:pointer; }
+    .summary { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+    .metric { border:1px solid var(--border); border-radius:14px; padding:16px; background:#fff; }
+    .metric .k { color:var(--muted); font-size:13px; }
+    .metric .v { font-size:28px; font-weight:800; margin:4px 0; }
+    .metric .d { color:var(--muted); font-size:13px; line-height:1.45; }
+    .winner { margin:10px 0 0; font-weight:700; }
+    svg { width:100%; min-width:620px; height:auto; display:block; }
+    .chart-scroll { overflow-x:auto; }
+    .legend { display:flex; gap:18px; flex-wrap:wrap; color:var(--muted); font-size:13px; margin-top:10px; }
+    .dot { width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:6px; }
+    .formula { color:var(--muted); font-size:13px; line-height:1.55; margin-top:14px; }
+    table { width:100%; border-collapse:collapse; margin-top:16px; font-size:13px; }
+    th, td { padding:8px 10px; border-bottom:1px solid var(--border); text-align:right; }
+    th:first-child, td:first-child { text-align:left; }
+    @media (max-width: 860px) { .layout { grid-template-columns:1fr; } .summary { grid-template-columns:1fr; } }
+    @media (max-width: 520px) { .wrap { padding:14px; } .controls { grid-template-columns:1fr; } .full { grid-column:auto; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Buy vs Rent + Invest</h1>
+    <div class="sub">Compare a retirement property purchase against renting while investing the purchase capital.</div>
+    <div class="layout">
+      <section class="card">
+        <h2 style="margin-top:0">Assumptions</h2>
+        <div class="controls">
+          <label class="full">House purchase price (£)<input id="price" type="number" min="0" step="10000" value="500000"></label>
+          <label>House appreciation (%/yr)<input id="houseRate" type="number" min="-20" max="30" step="0.1" value="2"></label>
+          <label>Exit haircut (%)<input id="haircut" type="number" min="0" max="100" step="1" value="25"></label>
+          <label>Management (£/yr)<input id="management" type="number" min="0" step="1000" value="10000"></label>
+          <label>Rent (£/month)<input id="rent" type="number" min="0" step="250" value="4000"></label>
+          <label>Investment return (%/yr)<input id="investmentRate" type="number" min="-20" max="30" step="0.1" value="5"></label>
+          <label>Years<input id="years" type="number" min="1" max="50" step="1" value="20"></label>
+          <div class="full"><button id="reset" type="button">Reset assumptions</button></div>
+        </div>
+        <div class="formula">
+          <strong>Option 1:</strong> purchase price + cumulative management fees − sale proceeds after appreciation and exit haircut.<br><br>
+          <strong>Option 2b:</strong> cumulative rent − gain on the original purchase-price amount invested and compounded annually.
+        </div>
+      </section>
+      <section>
+        <div class="summary">
+          <div class="metric"><div class="k">Option 1 · Buy</div><div class="v" id="buyCost">—</div><div class="d" id="buyDetail"></div></div>
+          <div class="metric"><div class="k">Option 2b · Rent + invest</div><div class="v" id="rentInvestCost">—</div><div class="d" id="rentDetail"></div></div>
+        </div>
+        <div class="card">
+          <h2 style="margin-top:0">Net economic cost by year</h2>
+          <div class="winner" id="difference"></div>
+          <div class="chart-scroll"><svg id="chart" viewBox="0 0 820 400" role="img" aria-label="Comparison chart"></svg></div>
+          <div class="legend"><span><span class="dot" style="background:var(--buy)"></span>Option 1 · Buy</span><span><span class="dot" style="background:var(--rent)"></span>Option 2b · Rent + invest</span></div>
+          <table><thead><tr><th>Year</th><th>Buy net cost</th><th>Rent + invest net cost</th></tr></thead><tbody id="rows"></tbody></table>
+        </div>
+      </section>
+    </div>
+  </main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const ids = ['price','houseRate','haircut','management','rent','investmentRate','years'];
+  const defaults = {price:500000, houseRate:2, haircut:25, management:10000, rent:4000, investmentRate:5, years:20};
+  const money = n => { const sign=n<0?'−':''; return sign+'£'+Math.round(Math.abs(n)).toLocaleString('en-GB'); };
+  const compact = n => { const sign=n<0?'−':'', a=Math.abs(n); if(a>=1e6)return sign+'£'+(a/1e6).toFixed(1)+'m'; if(a>=1e3)return sign+'£'+Math.round(a/1e3)+'k'; return sign+'£'+Math.round(a); };
+  const val = (id,fallback) => { const n=Number($(id).value); return Number.isFinite(n)?n:fallback; };
+  function read(){ return { price:Math.max(0,val('price',defaults.price)), houseRate:Math.max(-20,Math.min(30,val('houseRate',defaults.houseRate)))/100, haircut:Math.max(0,Math.min(100,val('haircut',defaults.haircut)))/100, management:Math.max(0,val('management',defaults.management)), rent:Math.max(0,val('rent',defaults.rent)), investmentRate:Math.max(-20,Math.min(30,val('investmentRate',defaults.investmentRate)))/100, years:Math.max(1,Math.min(50,Math.round(val('years',defaults.years)))) }; }
+  function calculate(v){ const out=[]; for(let y=1;y<=v.years;y++){ const houseValue=v.price*Math.pow(1+v.houseRate,y); const saleProceeds=houseValue*(1-v.haircut); const buyCost=v.price+v.management*y-saleProceeds; const investmentValue=v.price*Math.pow(1+v.investmentRate,y); const investmentGain=investmentValue-v.price; const rentPaid=v.rent*12*y; const rentInvestCost=rentPaid-investmentGain; out.push({y,houseValue,saleProceeds,buyCost,investmentValue,investmentGain,rentPaid,rentInvestCost}); } return out; }
+  function draw(data){ const svg=$('chart'), W=820,H=400,L=76,R=20,T=24,B=52; const vals=data.flatMap(d=>[d.buyCost,d.rentInvestCost]); let min=Math.min(0,...vals),max=Math.max(0,...vals); if(min===max)max=min+1; const pad=(max-min)*0.08; min-=pad; max+=pad; const x=y=>L+(data.length===1?(W-L-R)/2:(y-1)/(data.length-1)*(W-L-R)); const yy=v=>T+(max-v)/(max-min)*(H-T-B); const ns='http://www.w3.org/2000/svg'; svg.replaceChildren(); const add=(tag,attrs,text)=>{const n=document.createElementNS(ns,tag); for(const[k,v]of Object.entries(attrs||{}))n.setAttribute(k,v); if(text!==undefined)n.textContent=text; svg.appendChild(n); return n;}; const css=getComputedStyle(document.documentElement), border=css.getPropertyValue('--border').trim()||'#ddd', muted=css.getPropertyValue('--muted').trim()||'#666', buy=css.getPropertyValue('--buy').trim()||'#2563eb', rent=css.getPropertyValue('--rent').trim()||'#dc2626'; for(let i=0;i<=4;i++){const amount=min+(max-min)*i/4,py=yy(amount); add('line',{x1:L,y1:py,x2:W-R,y2:py,stroke:border,'stroke-width':1}); add('text',{x:L-10,y:py+4,'text-anchor':'end',fill:muted,'font-size':12},compact(amount));} const ticks=Math.min(10,data.length); for(let i=0;i<ticks;i++){const idx=ticks===1?0:Math.round(i*(data.length-1)/(ticks-1)),d=data[idx],px=x(d.y); add('text',{x:px,y:H-22,'text-anchor':'middle',fill:muted,'font-size':12},String(d.y));} add('text',{x:(L+W-R)/2,y:H-4,'text-anchor':'middle',fill:muted,'font-size':12},'Year'); const path=key=>data.map((d,i)=>(i?'L':'M')+x(d.y).toFixed(1)+','+yy(d[key]).toFixed(1)).join(' '); add('path',{d:path('buyCost'),fill:'none',stroke:buy,'stroke-width':3,'stroke-linejoin':'round','stroke-linecap':'round'}); add('path',{d:path('rentInvestCost'),fill:'none',stroke:rent,'stroke-width':3,'stroke-linejoin':'round','stroke-linecap':'round'}); }
+  function update(){ const v=read(), data=calculate(v), last=data[data.length-1]; $('buyCost').textContent=money(last.buyCost); $('rentInvestCost').textContent=money(last.rentInvestCost); $('buyDetail').textContent=`Year ${v.years}: house value ${money(last.houseValue)}, sale proceeds ${money(last.saleProceeds)}, management fees ${money(v.management*v.years)}.`; $('rentDetail').textContent=`Year ${v.years}: portfolio ${money(last.investmentValue)}, gain ${money(last.investmentGain)}, rent paid ${money(last.rentPaid)}.`; const diff=last.rentInvestCost-last.buyCost; $('difference').textContent=Math.abs(diff)<1?'Approximately equal at the selected horizon.':diff>0?`At year ${v.years}, buying is ahead by ${money(diff)}.`:`At year ${v.years}, rent + invest is ahead by ${money(-diff)}.`; $('rows').innerHTML=data.map(d=>`<tr><td>${d.y}</td><td>${money(d.buyCost)}</td><td>${money(d.rentInvestCost)}</td></tr>`).join(''); draw(data); }
+  ids.forEach(id=>$(id).addEventListener('input',update)); $('reset').addEventListener('click',()=>{for(const[k,v]of Object.entries(defaults))$(k).value=v; update();}); update();
+})();
+</script>
+</body>
+</html>
