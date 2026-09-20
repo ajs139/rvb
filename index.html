@@ -63,14 +63,20 @@
     }
     .mobile-year-head { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px; }
     .mobile-year-head strong { font-size:16px; }
-    .mobile-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; }
-    .mobile-item { min-width:0; }
+    .mobile-compare { display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:stretch; }
+    .mobile-col { display:flex; flex-direction:column; gap:8px; min-width:0; }
+    .mobile-col-title { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    .mobile-col.buy-side .mobile-col-title { color:var(--buy); }
+    .mobile-col.rent-side .mobile-col-title { color:var(--rent); }
+    .mobile-item { min-width:0; border-radius:8px; padding:8px; }
     .mobile-item .label { display:block; color:var(--muted); font-size:11px; line-height:1.2; }
     .mobile-item .value { display:block; margin-top:2px; font-size:14px; font-weight:700; }
-    .mobile-item.buy-box { background:var(--buy-bg); border-radius:8px; padding:8px; }
-    .mobile-item.rent-box { background:var(--rent-bg); border-radius:8px; padding:8px; }
-    .mobile-item.buy-total-box { background:var(--buy-total-bg); border-radius:8px; padding:10px; }
-    .mobile-item.rent-total-box { background:var(--rent-total-bg); border-radius:8px; padding:10px; }
+    .mobile-col.buy-side .mobile-item { background:var(--buy-bg); }
+    .mobile-col.rent-side .mobile-item { background:var(--rent-bg); }
+    .mobile-spacer { flex:1 1 auto; min-height:0; }
+    .mobile-item.total-box { margin-top:auto; padding:10px; }
+    .mobile-col.buy-side .mobile-item.total-box { background:var(--buy-total-bg); }
+    .mobile-col.rent-side .mobile-item.total-box { background:var(--rent-total-bg); }
     .mobile-item.total-box .label { font-size:12px; }
     .mobile-item.total-box .value { font-size:18px; font-weight:800; }
     .note { margin-top:10px; font-size:12px; color:var(--muted); line-height:1.45; }
@@ -372,14 +378,22 @@
           <strong>Year ${d.y}</strong>
           <span style="font-size:12px;color:var(--muted)">Exit fee ${pct(d.applicableExitRate)}</span>
         </div>
-        <div class="mobile-grid">
-          <div class="mobile-item buy-box"><span class="label">House value</span><span class="value">${money(d.houseValue)}</span></div>
-          <div class="mobile-item buy-box"><span class="label">Exit fee</span><span class="value">${money(d.exitFee)}</span></div>
-          <div class="mobile-item buy-box"><span class="label">Mgmt fees</span><span class="value">${money(d.totalManagement)}</span></div>
-          <div class="mobile-item buy-total-box total-box"><span class="label">Total cost on exit</span><span class="value">${money(d.buyCost)}</span></div>
-          <div class="mobile-item rent-box"><span class="label">Total rent</span><span class="value">${money(d.rentPaid)}</span></div>
-          <div class="mobile-item rent-box"><span class="label">Investment value</span><span class="value">${money(d.investmentValue)}</span></div>
-          <div class="mobile-item rent-total-box total-box"><span class="label">Rent + invest cost</span><span class="value">${money(d.rentInvestCost)}</span></div>
+        <div class="mobile-compare">
+          <div class="mobile-col buy-side">
+            <div class="mobile-col-title">Buy</div>
+            <div class="mobile-item"><span class="label">House value</span><span class="value">${money(d.houseValue)}</span></div>
+            <div class="mobile-item"><span class="label">Exit fee</span><span class="value">${money(d.exitFee)}</span></div>
+            <div class="mobile-item"><span class="label">Mgmt fees</span><span class="value">${money(d.totalManagement)}</span></div>
+            <div class="mobile-spacer"></div>
+            <div class="mobile-item total-box"><span class="label">Total cost on exit</span><span class="value">${money(d.buyCost)}</span></div>
+          </div>
+          <div class="mobile-col rent-side">
+            <div class="mobile-col-title">Rent + invest</div>
+            <div class="mobile-item"><span class="label">Total rent</span><span class="value">${money(d.rentPaid)}</span></div>
+            <div class="mobile-item"><span class="label">Investment value</span><span class="value">${money(d.investmentValue)}</span></div>
+            <div class="mobile-spacer"></div>
+            <div class="mobile-item total-box"><span class="label">Rent + invest cost</span><span class="value">${money(d.rentInvestCost)}</span></div>
+          </div>
         </div>
       </article>`).join('');
 
