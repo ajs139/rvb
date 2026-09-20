@@ -69,8 +69,10 @@
     .mobile-item .value { display:block; margin-top:2px; font-size:14px; font-weight:700; }
     .mobile-item.buy-box { background:var(--buy-bg); border-radius:8px; padding:8px; }
     .mobile-item.rent-box { background:var(--rent-bg); border-radius:8px; padding:8px; }
-    .mobile-item.buy-total-box { background:var(--buy-total-bg); border-radius:8px; padding:8px; }
-    .mobile-item.rent-total-box { background:var(--rent-total-bg); border-radius:8px; padding:8px; }
+    .mobile-item.buy-total-box { background:var(--buy-total-bg); border-radius:8px; padding:10px; }
+    .mobile-item.rent-total-box { background:var(--rent-total-bg); border-radius:8px; padding:10px; }
+    .mobile-item.total-box .label { font-size:12px; }
+    .mobile-item.total-box .value { font-size:18px; font-weight:800; }
     .note { margin-top:10px; font-size:12px; color:var(--muted); line-height:1.45; }
     @media (max-width: 900px) {
       .layout { grid-template-columns:1fr; }
@@ -374,10 +376,10 @@
           <div class="mobile-item buy-box"><span class="label">House value</span><span class="value">${money(d.houseValue)}</span></div>
           <div class="mobile-item buy-box"><span class="label">Exit fee</span><span class="value">${money(d.exitFee)}</span></div>
           <div class="mobile-item buy-box"><span class="label">Mgmt fees</span><span class="value">${money(d.totalManagement)}</span></div>
-          <div class="mobile-item buy-total-box"><span class="label">Total cost on exit</span><span class="value">${money(d.buyCost)}</span></div>
+          <div class="mobile-item buy-total-box total-box"><span class="label">Total cost on exit</span><span class="value">${money(d.buyCost)}</span></div>
           <div class="mobile-item rent-box"><span class="label">Total rent</span><span class="value">${money(d.rentPaid)}</span></div>
           <div class="mobile-item rent-box"><span class="label">Investment value</span><span class="value">${money(d.investmentValue)}</span></div>
-          <div class="mobile-item rent-total-box" style="grid-column:1/-1"><span class="label">Rent + invest cost</span><span class="value">${money(d.rentInvestCost)}</span></div>
+          <div class="mobile-item rent-total-box total-box"><span class="label">Rent + invest cost</span><span class="value">${money(d.rentInvestCost)}</span></div>
         </div>
       </article>`).join('');
 
